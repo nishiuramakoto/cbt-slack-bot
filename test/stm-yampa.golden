@@ -1,5 +1,26 @@
-//start
-init
-hello world!
-end
-<EOF>
+BotStart
+BotWarn "unknown command:test"
+BotWarn "unknown command:test2"
+BotMethodStart CbtTripleColumnTechnique
+BotStackPush   CbtTripleColumnTechnique CbtStackAT "I'm a dumb"
+BotStackFreeze CbtTripleColumnTechnique CbtStackAT
+BotStackPush   CbtTripleColumnTechnique CbtStackCD "Labeling"
+BotStackFreeze CbtTripleColumnTechnique CbtStackCD
+BotStackPush   CbtTripleColumnTechnique CbtStackRR "No one is dumb"
+BotStackFreeze CbtTripleColumnTechnique CbtStackRR
+BotMethodFinish CbtTripleColumnTechnique
+BotMethodStart CbtFiveColumnTechnique
+BotStackPush   CbtFiveColumnTechnique CbtStackST "At work I had difficulty concentrating"
+BotStackPush   CbtFiveColumnTechnique CbtStackST "on coding."
+BotStackFreeze CbtFiveColumnTechnique CbtStackST
+BotStackPush   CbtFiveColumnTechnique CbtStackAT "I can do anything helpful to others"
+BotStackFreeze CbtFiveColumnTechnique CbtStackAT
+BotStackPush   CbtFiveColumnTechnique CbtStackEM "Lonely, Sad"
+BotStackFreeze CbtFiveColumnTechnique CbtStackEM
+BotStackPush   CbtFiveColumnTechnique CbtStackCD "Overgeneralization"
+BotStackFreeze CbtFiveColumnTechnique CbtStackCD
+BotStackPush   CbtFiveColumnTechnique CbtStackRR "I have done many things"
+BotStackPush   CbtFiveColumnTechnique CbtStackRR "helpful to others"
+BotStackFreeze CbtFiveColumnTechnique CbtStackRR
+BotMethodFinish CbtFiveColumnTechnique
+BotFinish
