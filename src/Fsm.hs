@@ -14,11 +14,12 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Control.Monad.State as SM
 import qualified FRP.Yampa as Yampa
 
+import Text.Show.Unicode
 import Control.Arrow
 import Control.Monad
 
 dump :: Show a => a -> IO ()
-dump x = putStrLn (show x)
+dump x = putStrLn (ushow x)
 
 dumpS :: String -> IO ()
 dumpS x = putStrLn x
@@ -40,6 +41,8 @@ data BotOutput
   | BotFinish
   | BotMessage String
   | BotWarn    String
+  | BotSessionHelpStart
+  | BotSessionHelpFinish
   | BotStackPush    CbtMethod CbtStack String
   | BotStackFreeze  CbtMethod CbtStack
   | BotMethodStart  CbtMethod
@@ -83,13 +86,19 @@ type CbtSessionEvent = Yampa.Event CbtMethod
 cbtEvent :: CbtMethod -> CbtSessionEvent
 cbtEvent method = Yampa.Event method
 
-data CbtCommand = CbtSessionStart
-                | CbtSessionAbort
-                | CbtSessionFinish
-                | CbtMethodStart   CbtMethod
-                | CbtMethodAbort   CbtMethod
-                | CbtMethodFinish  CbtMethod
-                | CbtUnknownCommand String
+data CbtCommand
+  = CbtSessionStart
+  | CbtSessionAbort
+  | CbtSessionFinish
+  | CbtSessionHelpStart
+  | CbtSessionHelpFinish
+  | CbtMethodStart   CbtMethod
+  | CbtMethodAbort   CbtMethod
+  | CbtMethodFinish  CbtMethod
+  | CbtMethodColumnStart   CbtMethod CbtStack
+  | CbtMethodColumnAbort   CbtMethod CbtStack
+  | CbtMethodColumnFinish  CbtMethod CbtStack
+  | CbtUnknownCommand String
                 deriving (Eq, Ord, Show)
 
 isFinalBotState :: BotOutput -> Bool
@@ -176,6 +185,8 @@ dAlt x y e = case (e :: Either il ir) of
   Right ir -> y ir >>>
               Yampa.identity *** Yampa.arr (fmap Right)
 
+infixr 5 `dAlt`
+
 -- | One or more, usually denoted by "a+"
 dPlus :: ESF e e a b -> ESF e e a b
 dPlus x = x `dStep` dPlus x
@@ -188,8 +199,121 @@ orP :: (a -> Bool)
     -> (a -> Bool)
 orP p q x = p x || q x
 
+
+type EBot i o = ESF i o BotInput [BotOutput]
+type Two = Either () ()
+
+
 cbt :: Yampa.SF BotInput [BotOutput]
-cbt = cbtSession `Yampa.dSwitch` doMethod
+cbt = cbtE CbtSessionStart >>^ fst
+
+cbtE :: CbtBot
+cbtE = dPlus $ cbtSessionGuideE `dStep` doMethod
+  where
+    doMethod e = case e of
+       CbtSessionHelpStart   ->
+         cbtSessionHelpE e
+       CbtMethodStart CbtTripleColumnTechnique ->
+         cbtTripleColumnTechniqueE e
+       _  ->
+         cbtUnimplementedE e
+
+cbtUnimplementedE :: CbtBot
+cbtUnimplementedE e =
+  Yampa.constant $
+  ([BotMessage $ "unimplemented:" ++ ushow e],
+   noEvent)
+
+type BotEvent = Yampa.Event CbtCommand
+
+cbtSessionGuideE :: CbtBot
+cbtSessionGuideE _ = Yampa.arr parse
+  where
+    parse :: BotInput -> ([BotOutput], BotEvent)
+    parse (Just input)
+      | input == ":start" =
+          ([BotStart], noEvent)
+      | input == "ヘルプ" =
+          (helpMessage  , ev CbtSessionHelpStart )
+      | input `elem` ["3", ":3", "自動思考"] =
+          (tctMessage, event tctEvent)
+      | otherwise =
+          ([BotWarn $ "unknown command:" ++ input],
+           noEvent)
+
+    parse Nothing = ([BotFinish], noEvent)
+
+    ev = Yampa.Event
+    helpMessage =
+      [ BotMessage "コマンド:"
+      , BotMessage "ヘルプ -- Enter help mode"
+      , BotMessage "3 -- Start Triple-column technique"
+      , BotMessage "自動思考 -- Start Triple-column technique"
+      ]
+
+    tctMessage =
+      [ BotMethodStart
+        CbtTripleColumnTechnique
+      ]
+    tctEvent  =
+      CbtMethodStart CbtTripleColumnTechnique
+
+cbtSessionHelpE :: EBot CbtCommand CbtCommand
+cbtSessionHelpE _ = Yampa.arr $ help
+  where
+    help (Just input)
+      | input == "認知の歪み" =
+        ( [BotMessage "AN, OG, MF, DP, MR, FT, MM, EM, SH, LB, PE"],
+          noEvent )
+      | otherwise =
+        ([], event CbtSessionHelpFinish)
+    help Nothing = ([BotSessionHelpFinish], noEvent)
+
+type CbtBot = EBot CbtCommand CbtCommand
+
+cbtColumnFinished :: Yampa.SF BotInput Bool
+cbtColumnFinished = Yampa.arr finished
+  where
+    finished (Just line) =
+      or [ isBlankLine line
+         , line `elem` ["以上", "終わり"]
+         ]
+    finished (Nothing) = True
+
+cbtColumnE :: CbtMethod -> CbtStack -> CbtBot
+cbtColumnE method stack _ = let
+  ev  = CbtMethodColumnFinish method stack
+  evIf e True  = event e
+  evIf e False = noEvent
+  in
+  cbtPushLine method stack
+  &&&
+  (cbtColumnFinished >>^ evIf ev)
+
+cbtTripleColumnTechniqueE :: CbtBot
+cbtTripleColumnTechniqueE =
+  dStepFold [atMode, cdMode, rrMode]
+  where
+    method = CbtTripleColumnTechnique
+    atMode = cbtColumnE method CbtStackAT
+             `mapOnEventE` (++ cdMessage)
+    cdMode = cbtColumnE method CbtStackCD
+             `mapOnEventE` (++ rrMessage)
+    rrMode = cbtColumnE method CbtStackRR
+             `mapOnEventE` (++ tctFinishMessage)
+
+
+    cdMessage =
+      [ BotMessage "認知の歪み"
+      , BotMessage "AN, OG, MF, DP, MR, FT, MM, EM, SH, LB, PE"
+      ]
+    rrMessage = [ BotMessage "合理的反応"]
+
+    tctFinishMessage =
+      [ BotMethodFinish CbtTripleColumnTechnique ]
+
+cbt' :: Yampa.SF BotInput [BotOutput]
+cbt' = cbtSession `Yampa.dSwitch` doMethod
   where
     stMessage = [ BotMessage "状況" ]
     atMessage = [ BotMessage "自動思考" ]
@@ -240,6 +364,11 @@ cbt = cbtSession `Yampa.dSwitch` doMethod
 mapOnEvent f (x, ev)
       | isEvent ev = (f x, ev)
       | otherwise  = (x, ev)
+
+mapOnEventE :: CbtBot
+            -> ([BotOutput] -> [BotOutput])
+            -> CbtBot
+mapOnEventE bot f = \e -> bot e >>^ mapOnEvent f
 
 cbtSession :: Yampa.SF BotInput ([BotOutput], CbtSessionEvent)
 cbtSession = proc input -> do

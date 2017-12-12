@@ -3,40 +3,34 @@ BotWarn "unknown command:test"
 BotWarn "unknown command:test2"
 BotMethodStart CbtTripleColumnTechnique
 BotStackPush   CbtTripleColumnTechnique CbtStackAT "I'm a dumb"
-BotMessage "認知の歪み"
-BotMessage "AN, OG, MF, DP, MR, FT, MM, EM, SH, LB, PE"
 BotStackFreeze CbtTripleColumnTechnique CbtStackAT
 BotMethodColumnFinish CbtTripleColumnTechnique CbtStackAT
+BotMessage "認知の歪み"
+BotMessage "AN, OG, MF, DP, MR, FT, MM, EM, SH, LB, PE"
 BotStackPush   CbtTripleColumnTechnique CbtStackCD "Labeling"
-BotMessage "合理的反応"
 BotStackFreeze CbtTripleColumnTechnique CbtStackCD
 BotMethodColumnFinish CbtTripleColumnTechnique CbtStackCD
+BotMessage "合理的反応"
 BotStackPush   CbtTripleColumnTechnique CbtStackRR "No one is dumb"
 BotStackFreeze CbtTripleColumnTechnique CbtStackRR
 BotMethodColumnFinish CbtTripleColumnTechnique CbtStackRR
 BotMethodFinish CbtTripleColumnTechnique
-BotMethodStart CbtFiveColumnTechnique
-BotStackPush   CbtFiveColumnTechnique CbtStackST "At work I had difficulty concentrating"
-BotStackPush   CbtFiveColumnTechnique CbtStackST "on coding."
-BotMessage "自動思考"
-BotStackFreeze CbtFiveColumnTechnique CbtStackST
-BotMethodColumnFinish CbtFiveColumnTechnique CbtStackST
-BotStackPush   CbtFiveColumnTechnique CbtStackAT "I can do anything helpful to others"
-BotMessage "感情"
-BotStackFreeze CbtFiveColumnTechnique CbtStackAT
-BotMethodColumnFinish CbtFiveColumnTechnique CbtStackAT
-BotStackPush   CbtFiveColumnTechnique CbtStackEM "Lonely, Sad"
+BotMessage "コマンド:"
+BotMessage "ヘルプ -- Enter help mode"
+BotMessage "3 -- Start Triple-column technique"
+BotMessage "自動思考 -- Start Triple-column technique"
+BotMethodStart CbtTripleColumnTechnique
+BotStackPush   CbtTripleColumnTechnique CbtStackAT "I'm a dumb"
+BotStackFreeze CbtTripleColumnTechnique CbtStackAT
+BotMethodColumnFinish CbtTripleColumnTechnique CbtStackAT
 BotMessage "認知の歪み"
 BotMessage "AN, OG, MF, DP, MR, FT, MM, EM, SH, LB, PE"
-BotStackFreeze CbtFiveColumnTechnique CbtStackEM
-BotMethodColumnFinish CbtFiveColumnTechnique CbtStackEM
-BotStackPush   CbtFiveColumnTechnique CbtStackCD "Overgeneralization"
+BotStackPush   CbtTripleColumnTechnique CbtStackCD "Labeling"
+BotStackFreeze CbtTripleColumnTechnique CbtStackCD
+BotMethodColumnFinish CbtTripleColumnTechnique CbtStackCD
 BotMessage "合理的反応"
-BotStackFreeze CbtFiveColumnTechnique CbtStackCD
-BotMethodColumnFinish CbtFiveColumnTechnique CbtStackCD
-BotStackPush   CbtFiveColumnTechnique CbtStackRR "I have done many things"
-BotStackPush   CbtFiveColumnTechnique CbtStackRR "helpful to others"
-BotStackFreeze CbtFiveColumnTechnique CbtStackRR
-BotMethodColumnFinish CbtFiveColumnTechnique CbtStackRR
-BotMethodFinish CbtFiveColumnTechnique
+BotStackPush   CbtTripleColumnTechnique CbtStackRR "No one is dumb"
+BotStackFreeze CbtTripleColumnTechnique CbtStackRR
+BotMethodColumnFinish CbtTripleColumnTechnique CbtStackRR
+BotMethodFinish CbtTripleColumnTechnique
 BotFinish
