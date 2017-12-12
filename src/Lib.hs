@@ -157,7 +157,6 @@ toSlackMessages ch outs = homo f outs
 
         BotMethodFinish method ->
           [ Message (pack $ ppJP method ++"終了") ch
-          , Disconnect
           ]
 
         BotAbort ->

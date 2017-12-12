@@ -325,55 +325,6 @@ cbtTripleColumnTechniqueE =
     tctFinishMessage =
       [ BotMethodFinish CbtTripleColumnTechnique ]
 
-cbt' :: Yampa.SF BotInput [BotOutput]
-cbt' = cbtSession `Yampa.dSwitch` doMethod
-  where
-    stMessage = [ BotMessage "状況" ]
-    atMessage = [ BotMessage "自動思考" ]
-    emMessage = [ BotMessage "感情" ]
-
-    cdMessage = [ BotMessage "認知の歪み"
-                , BotMessage "AN, OG, MF, DP, MR, FT, MM, EM, SH, LB, PE"
-                ]
-    rrMessage = [ BotMessage "合理的反応"]
-
-    doMethod method = case method of
-      CbtTripleColumnTechnique ->
-        dStepFold' [ cbtColumnUntil method CbtStackAT
-                     (isBlankLine `orP` (== "認知の歪み"))
-                     >>^ mapOnEvent (cdMessage ++)
-                   , cbtColumnUntil method CbtStackCD
-                     (isBlankLine `orP` (== "合理的反応"))
-                     >>^ mapOnEvent (rrMessage ++)
-                   , cbtColumnUntil method CbtStackRR
-                     isBlankLine
-                     >>^ methodFinish method
-                   ]
-        `Yampa.dSwitch`
-        const cbt
-
-      CbtFiveColumnTechnique ->
-        dStepFold' [ cbtColumnUntil method CbtStackST
-                     (isBlankLine `orP` (== "自動思考"))
-                     >>^ mapOnEvent (atMessage ++)
-                   , cbtColumnUntil method CbtStackAT
-                     (isBlankLine `orP` (== "感情"))
-                     >>^ mapOnEvent (emMessage ++)
-                   , cbtColumnUntil method CbtStackEM
-                     (isBlankLine `orP` (== "認知の歪み"))
-                     >>^ mapOnEvent (cdMessage ++)
-                   , cbtColumnUntil method CbtStackCD
-                     (isBlankLine `orP` (== "合理的反応"))
-                     >>^ mapOnEvent (rrMessage ++)
-                   , cbtColumnUntil method CbtStackRR
-                     isBlankLine
-                     >>^ methodFinish method
-                   ]
-        `Yampa.dSwitch`
-        const cbt
-
-    methodFinish method = mapOnEvent (++ [BotMethodFinish method ])
-
 mapOnEvent f (x, ev)
       | isEvent ev = (f x, ev)
       | otherwise  = (x, ev)
@@ -382,30 +333,6 @@ mapOnEventE :: CbtBot
             -> ([BotOutput] -> [BotOutput])
             -> CbtBot
 mapOnEventE bot f = \e -> bot e >>^ mapOnEvent f
-
-cbtSession :: Yampa.SF BotInput ([BotOutput], CbtSessionEvent)
-cbtSession = proc input -> do
-  case input of
-    Just ":start" -> returnA -< ([BotStart], noEvent)
-    Just ":help"  -> cbtSessionHelp -< ()
-    Just "ヘルプ" -> cbtSessionHelp -< ()
-    Just ":3" -> returnA -< ([BotMethodStart CbtTripleColumnTechnique],
-                             cbtEvent CbtTripleColumnTechnique)
-    Just "自動思考" -> returnA -< ([BotMethodStart CbtTripleColumnTechnique],
-                                   cbtEvent CbtTripleColumnTechnique)
-
-    Just ":5" -> returnA -< ([BotMethodStart CbtFiveColumnTechnique],
-                             cbtEvent CbtFiveColumnTechnique)
-    Just ""   -> returnA -< ([BotWarn "empty line"], noEvent)
-    Just xs   -> returnA -< ([BotWarn $ "unknown command:" ++ xs], noEvent)
-    Nothing   -> returnA -< ([BotFinish], noEvent)
-
-cbtSessionHelp :: Yampa.SF () ([BotOutput], CbtSessionEvent)
-cbtSessionHelp = Yampa.constant
-                 ([ BotMessage "help1"
-                  , BotMessage "help2"
-                  ] ,
-                  noEvent)
 
 -- Just warn once
 cbtWarn :: String -> Yampa.SF BotInput [BotOutput]
@@ -435,15 +362,6 @@ cbtPushLine method stack = Yampa.arr push
              ]
 
 type UnitEvent = Yampa.Event ()
-
-cbtBlankLineEvent :: Yampa.SF BotInput UnitEvent
-cbtBlankLineEvent = Yampa.arr ev
-  where
-    ev input = case input of
-      Just l  -> if isBlankLine l
-                 then event ()
-                 else noEvent
-      Nothing -> event ()
 
 isBlankLine l = all isSpace l
 
