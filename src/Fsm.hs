@@ -5,6 +5,9 @@
 
 module Fsm where
 
+import qualified FRP.Yampa as Yampa
+import           FRP.Yampa((-->), (-:>))
+
 import Data.List
 import Data.Ord
 import Data.Char
@@ -12,7 +15,6 @@ import Data.Char
 import qualified Data.List as List
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Control.Monad.State as SM
-import qualified FRP.Yampa as Yampa
 
 import Text.Show.Unicode
 import Control.Arrow
@@ -207,9 +209,21 @@ type Two = Either () ()
 cbt :: Yampa.SF BotInput [BotOutput]
 cbt = cbtE CbtSessionStart >>^ fst
 
-cbtE :: CbtBot
-cbtE = dPlus $ cbtSessionGuideE `dStep` doMethod
+cbtAbort :: CbtBot
+cbtAbort _ = Yampa.arr abort
   where
+    abort (Just input)
+      | input `elem` ["終了", "おわり"] =
+          ([ BotAbort ], event CbtSessionAbort )
+    abort _ = ([], noEvent)
+
+cbtE :: CbtBot
+cbtE e = (stm e &&& abort e) >>^ cat
+  where
+    stm   = dPlus $ cbtSessionGuideE `dStep` doMethod
+    abort = cbtAbort
+    cat ((xs, e), (ys, _)) = (xs++ys, e)
+
     doMethod e = case e of
        CbtSessionHelpStart   ->
          cbtSessionHelpE e
@@ -301,7 +315,6 @@ cbtTripleColumnTechniqueE =
              `mapOnEventE` (++ rrMessage)
     rrMode = cbtColumnE method CbtStackRR
              `mapOnEventE` (++ tctFinishMessage)
-
 
     cdMessage =
       [ BotMessage "認知の歪み"

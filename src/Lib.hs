@@ -146,10 +146,24 @@ toSlackMessages ch outs = homo f outs
   where
     f :: BotOutput -> [SlackMessage]
     f x = case x of
-        BotMessage x          -> [Message (pack x) ch]
-        BotWarn x             -> [Message (pack $ "warning:" ++  x) ch]
-        BotMethodStart  method -> [Message (pack $ ppJP method) ch]
-        BotMethodFinish method -> [Message (pack $ ppJP method ++"終了") ch]
+        BotMessage x          ->
+          [Message (pack x) ch]
+
+        BotWarn x             ->
+          [Message (pack $ "warning:" ++  x) ch]
+
+        BotMethodStart  method ->
+          [Message (pack $ ppJP method) ch]
+
+        BotMethodFinish method ->
+          [ Message (pack $ ppJP method ++"終了") ch
+          , Disconnect
+          ]
+
+        BotAbort ->
+          [ Message (pack "中断") ch
+          , Disconnect
+          ]
 
         BotMethodColumnStart method stack ->
           [Message (pack $ ppJP stack) ch]
