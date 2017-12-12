@@ -1,6 +1,7 @@
 -- | Implementation of time-varied automata using FRP/Yampa
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE Arrows #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE Arrows              #-}
 
 module Fsm where
 
@@ -125,19 +126,59 @@ echo = Yampa.arr f
     f (Just s) = [BotMessage s]
     f Nothing  = [BotFinish]
 
--- | Meant to be associative
-dStep :: Yampa.SF a (b, Yampa.Event ())
-      -> Yampa.SF a (b, Yampa.Event ())
-      -> Yampa.SF a (b, Yampa.Event ())
-dStep x y = x' `Yampa.dSwitch` const y
-  where
-    x' = proc a -> do
-      (b, e) <- x -< a
-      returnA -< ((b, noEvent), e)
+-- Finite state machine combinators based on
+-- Event switching using Kleene's language
+-- (i.e. the regular expression)
 
-dStepFold :: [ Yampa.SF a (b, Yampa.Event ()) ]
-          -> Yampa.SF a (b, Yampa.Event ())
+type ESF ei eo a b = ei
+                     -> Yampa.SF a (b, Yampa.Event eo)
+
+dEmpty :: ESF e e a a
+dEmpty e = Yampa.identity
+           &&&
+           Yampa.constant (Yampa.Event e)
+
+-- | Associative concatenation, i.e. "ab" in regexp
+dStep :: ESF e e a b -> ESF e e a b -> ESF e e a b
+dStep x y = \e -> x' e `Yampa.dSwitch` y
+  where
+    x' e = x e >>>
+           Yampa.arr noev *** Yampa.identity
+    noev x = (x, noEvent)
+
+
+-- | Homomorphism from non-empty list. Unit is available
+--   only if a -> b is inhabited.
+dStepFold :: [ ESF e e a b ] -> ESF e e a b
 dStepFold = foldl1 dStep
+
+dStep' :: Yampa.SF a (b, Yampa.Event ())
+       -> Yampa.SF a (b, Yampa.Event ())
+       -> Yampa.SF a (b, Yampa.Event ())
+dStep' x y = x' `Yampa.dSwitch` const y
+   where
+     x' = x >>> Yampa.arr noev *** Yampa.identity
+     noev x = (x, noEvent)
+
+dStepFold' :: [ Yampa.SF a (b, Yampa.Event ()) ]
+             -> Yampa.SF a (b, Yampa.Event ())
+dStepFold' = foldl1 dStep'
+
+-- | Choice operator, i.e. "a|b". Lax (but not
+--   strict) associative.
+dAlt :: forall il ol ir or a b.
+        ESF il ol a b
+     -> ESF ir or a b
+     -> ESF (Either il ir) (Either ol or) a b
+dAlt x y e = case (e :: Either il ir) of
+  Left  il -> x il >>>
+              Yampa.identity *** Yampa.arr (fmap Left)
+  Right ir -> y ir >>>
+              Yampa.identity *** Yampa.arr (fmap Right)
+
+-- | One or more, usually denoted by "a+"
+dPlus :: ESF e e a b -> ESF e e a b
+dPlus x = x `dStep` dPlus x
 
 cbtHello :: Yampa.SF BotInput [BotOutput]
 cbtHello = Yampa.constant $ [ BotMessage "hello world!" ]
@@ -161,36 +202,36 @@ cbt = cbtSession `Yampa.dSwitch` doMethod
 
     doMethod method = case method of
       CbtTripleColumnTechnique ->
-        dStepFold [ cbtColumnUntil method CbtStackAT
-                    (isBlankLine `orP` (== "認知の歪み"))
-                    >>^ mapOnEvent (cdMessage ++)
-                  , cbtColumnUntil method CbtStackCD
-                    (isBlankLine `orP` (== "合理的反応"))
-                    >>^ mapOnEvent (rrMessage ++)
-                  , cbtColumnUntil method CbtStackRR
-                    isBlankLine
-                    >>^ methodFinish method
-                  ]
+        dStepFold' [ cbtColumnUntil method CbtStackAT
+                     (isBlankLine `orP` (== "認知の歪み"))
+                     >>^ mapOnEvent (cdMessage ++)
+                   , cbtColumnUntil method CbtStackCD
+                     (isBlankLine `orP` (== "合理的反応"))
+                     >>^ mapOnEvent (rrMessage ++)
+                   , cbtColumnUntil method CbtStackRR
+                     isBlankLine
+                     >>^ methodFinish method
+                   ]
         `Yampa.dSwitch`
         const cbt
 
       CbtFiveColumnTechnique ->
-        dStepFold [ cbtColumnUntil method CbtStackST
-                    (isBlankLine `orP` (== "自動思考"))
-                    >>^ mapOnEvent (atMessage ++)
-                  , cbtColumnUntil method CbtStackAT
-                    (isBlankLine `orP` (== "感情"))
-                    >>^ mapOnEvent (emMessage ++)
-                  , cbtColumnUntil method CbtStackEM
-                    (isBlankLine `orP` (== "認知の歪み"))
-                    >>^ mapOnEvent (cdMessage ++)
-                  , cbtColumnUntil method CbtStackCD
-                    (isBlankLine `orP` (== "合理的反応"))
-                    >>^ mapOnEvent (rrMessage ++)
-                  , cbtColumnUntil method CbtStackRR
-                    isBlankLine
-                    >>^ methodFinish method
-                  ]
+        dStepFold' [ cbtColumnUntil method CbtStackST
+                     (isBlankLine `orP` (== "自動思考"))
+                     >>^ mapOnEvent (atMessage ++)
+                   , cbtColumnUntil method CbtStackAT
+                     (isBlankLine `orP` (== "感情"))
+                     >>^ mapOnEvent (emMessage ++)
+                   , cbtColumnUntil method CbtStackEM
+                     (isBlankLine `orP` (== "認知の歪み"))
+                     >>^ mapOnEvent (cdMessage ++)
+                   , cbtColumnUntil method CbtStackCD
+                     (isBlankLine `orP` (== "合理的反応"))
+                     >>^ mapOnEvent (rrMessage ++)
+                   , cbtColumnUntil method CbtStackRR
+                     isBlankLine
+                     >>^ methodFinish method
+                   ]
         `Yampa.dSwitch`
         const cbt
 
