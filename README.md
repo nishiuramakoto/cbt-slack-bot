@@ -429,3 +429,6 @@ Slack、Line、Twitterなどのウェブサービス
 [^1]: Paul Hudakによる[Yampaスライド](http://www.cs.yale.edu/homes/hudak/CS429F04/LectureSlides/YampaForCs429.ppt "Yampa Slide")を参照。
 
 [^2]: スイッチの[ダイアグラム](http://lambdor.net/?p=209 "Yampa Switch Diagram")がわかりやすいです。
+
+
+コードは[こちら](https://github.com/nishiuramakoto/cbt-slack-bot#ref-Burns81)。
