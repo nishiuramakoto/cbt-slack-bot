@@ -402,7 +402,7 @@ Slack、Line、Twitterなどのウェブサービス
 参考文献
 --------
 
-<a name="#ref-Burns81"></a>
+<a name="ref-Burns81"></a>
 * Burns, David D. 1981. *Feeling Good: The New Mood Therapy*. New York,
   N.Y.: Penguin Books.
 
