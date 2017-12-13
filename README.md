@@ -399,14 +399,12 @@ Functional Reactive Programmingは関数言
 Slack、Line、Twitterなどのウェブサービス
 を利用するボットや、実際のロボットの制御などに活用できるかもしれません。
 
-参考文献 {#参考文献 .unnumbered}
+参考文献
 --------
 
-::: {#refs .references}
-::: {#ref-Burns81}
-Burns, David D. 1981. *Feeling Good: The New Mood Therapy*. New York,
-N.Y.: Penguin Books.
-:::
+<a name="#ref-Burns81"></a>
+* Burns, David D. 1981. *Feeling Good: The New Mood Therapy*. New York,
+  N.Y.: Penguin Books.
 
 ::: {#ref-ElliottHudak97:Fran}
 Elliott, Conal, and Paul Hudak. 1997. "Functional Reactive Animation."
