@@ -421,7 +421,7 @@ Slack、Line、Twitterなどのウェブサービス
 * Hughes, John. 2000. "Generalising Monads to Arrows." *Science of
   Computer Programming* 37 (May):67--111.
 
-<a name="ref-JamisonScogin95">
+<a name="ref-JamisonScogin95"></a>
 * Jamison, C., and F. Scogin. 1995. "Outcome of Cognitive Bibliotherapy
   with Depressed Adults." *Journal of Consulting and Clinical Psychology*
   63:644--50.
