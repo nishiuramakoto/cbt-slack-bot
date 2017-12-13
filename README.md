@@ -4,6 +4,15 @@ link-citations: True
 nocite: '@\*'
 ---
 
+Instructions
+------------
+
+1. Create a Slack workspace and/or channel for testing.
+1. Get a [slack legacy api token][https://api.slack.com/custom-integrations/legacy-tokens] for that channel.
+2. Edit `apiKey` in `src/Main.hs`.
+3. `stack setup && stack build && stack exec`
+
+
 YampaでFunctional Reactiveな認知行動療法ボットを書く
 ====================================================
 
