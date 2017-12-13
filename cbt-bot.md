@@ -1,62 +1,65 @@
 ---
-bibliography: 'cbt-bot.bib'
-link-citations: True
-nocite: '@\*'
----
+bibliography: cbt-bot.bib
+link-citations: true
+nocite: '@*'
+...
 
 YampaでFunctional Reactiveな認知行動療法ボットを書く
-====================================================
+=====================================================
 
-これは[Haskell Advent Calendar
-その3](https://qiita.com/advent-calendar/2017/haskell3 "Haskell Advent Calendar 3")、
-13日目の記事です。前日の記事はmatsubara0507さんの [Haskell
-Backpack覚え書き](https://matsubara0507.github.io/posts/2017-12-12-backpack-memo.html "Previous article")でした。
+これは[Haskell Advent Calendar その3][Advent3]、
+13日目の記事です。前日の記事はmatsubara0507さんの
+[Haskell Backpack覚え書き][Prev]でした。
 
 はじめに
 --------
 
-[Functional Reactive Programming](http://conal.net/papers/icfp97/ "Functional Reactive Animation")(FRP)
+[Functional Reactive Programming][FRAN paper](FRP)
 を使うと、時間軸に沿って入出力の関係が変
 化するシステムの挙動を、シンボリックに記
 述し、組み合わせることができます。ロボッ
 ト、ゲーム、GUIなどのプロラミングに便利
-です。[Yampa](https://wiki.haskell.org/Yampa#External_Links "Yampa wiki")は、イエール大
+です。[Yampa][Yampa wiki]は、イエール大
 Haskellグループによって開発されたFRPのラ
-イブラリで、[Arrow](https://wiki.haskell.org/Arrow#External_links "Arrow wiki")の記法を
+イブラリで、[Arrow][Arrow wiki]の記法を
 フル活用します。
 
-認知行動療法(Cognitive Behaviour Therapy, CBT)は、医学的に確
-立された心理療法の一種です。本記事では、CBTの自己対話スキー
-ムを提供するボットを、Yampaを使って書いてみます。
+認知行動療法(Cognitive Behaviour
+Therapy, CBT)は、医学的に確立された心理
+療法の一種です。本記事では、CBTの自己対
+話スキームを提供するボットを、Yampaを使っ
+て書いてみます。
 
 目標
 ----
 
-時間と入力によって変化するボットの挙動を、 正規表現のようなDSL(Domain
-Specific Language) で表せると便利です。状態変数を直接扱うと、
+時間と入力によって変化するボットの挙動を、
+正規表現のようなDSL(Domain Specific Language)
+で表せると便利です。状態変数を直接扱うと、
 コードが見にくくなったり、少しの挙動の変更が
 状態変数の意味や数に大きな変更を生じたりするからです。
 
 Yampaでそのような正規表現的状態機械DSLを
-書いて、CBTボットのコーディングに使って みましょう。
+書いて、CBTボットのコーディングに使って
+みましょう。
+
 
 YampaとArrowised Functional Reactive Programming(AFRP)
 ------------------------------------------------------
 
 FRPは主に二つの概念によってなりたっています。
 
-1.  時間tにそって連続的に変動するシステムの*挙動*
-2.  *イベント*の時系列`[ev(t0), ev(t1), ... ]`
+1. 時間tにそって連続的に変動するシステムの*挙動*
+2. *イベント*の時系列`[ev(t0), ev(t1), ... ]`
 
 この二つをシンボリックに組み合わせ、より複雑なシステムを記述して
 いく技法が、*Functional Reactive Programming*です。
 
 FRPには次のような利点があります。
 
-1.  単純なシステムをシンボリックに組み合わせ、より複雑なシステムを記述する、
-    関数言語の方法論が使える。(例: `sf1 >>> sf2`)
-2.  システムを入出力系と独立に定義できる。(e.g. stdio, http, websocket,
-    GUI..)
+1. 単純なシステムをシンボリックに組み合わせ、より複雑なシステムを記述する、
+   関数言語の方法論が使える。(例: `sf1 >>> sf2`)
+2. システムを入出力系と独立に定義できる。(e.g. stdio, http, websocket, GUI..)
 
 欠点としては、特にデフォルトで遅延評価を
 行うHaskellの場合、パフォーマンスやリー
@@ -64,33 +67,39 @@ FRPには次のような利点があります。
 で起きるリークは、スペースリークとタイム
 リークに分けられますが、Yampaでは、時間t
 を直接露出せず、*シグナル関数*を操作する
-APIを提供することによって、タイムリーク の問題を緩和しています。
+APIを提供することによって、タイムリーク
+の問題を緩和しています。
 
-Yampaを構成する概念は主に次の四つです。[^1]
+Yampaを構成する概念は主に次の四つです。[^fn1]
 
-1.  時間`Time`。システムが動きだした時を0とする。
-2.  シグナル `Signal a = Time -> a`。値`a`を取る`Time`の関数。
-3.  シグナル関数 `SF a b = Signal a -> Signal b`。
-    シグナルをシグナルへ写す、高階関数。
-4.  イベント `Event a = NoEvent | Event a`。`Maybe`と同型。
-    シグナル関数から別のシグナル関数に*スイッチ*するときに使う。
+1. 時間`Time`。システムが動きだした時を0とする。
+2. シグナル `Signal a = Time -> a`。値`a`を取る`Time`の関数。
+3. シグナル関数 `SF a b = Signal a -> Signal b`。
+   シグナルをシグナルへ写す、高階関数。
+4. イベント `Event a = NoEvent | Event a`。`Maybe`と同型。
+   シグナル関数から別のシグナル関数に*スイッチ*するときに使う。
+
+[^fn1]: Paul Hudakによる[Yampaスライド][Yampa slide]を参照。
 
 シグナル`Time->a`の直接操作はタイムリー
-クを起しやすい、というのがYampaのアイデアで
+クを起しやすい、というのがYampaの主張で
 す。遅延評価の下、「昔の記憶」がどこかに
 残っていれば、その記憶につながった他のデー
 タも全てリークしてしまいます。
 
-Yampaではシグナルでなく、シグナル関数を操作します。過去を参照する操作
-(e.g. integral, differential, delay,
-etc.)は限定され、タイムリークをおこしにくいよう設計されています。
+Yampaではシグナルでなく、シグナル関数を
+操作します。過去を参照する操作
+(e.g. integral, differential, delay,
+etc.)は限定され、タイムリークをおこしに
+くいよう設計されています。
 
 シグナル関数は自然に`Arrow`インスタンス
 を持ちます。時間とシグナルを隠すYampaの
 のArrowプログラミングは、「状態」を隠す
 `IO`モナドプログラミングの一般化と見るこ
-とができます。(ArrowとMonadの相違については、Lugendreさんの
-[Advent記事](https://qiita.com/Lugendre/items/6b4a8c8a9c85fcdcb292 "Lugendre Arrow")がわかりやす
+とができます。(ArrowとMonadの相違につい
+ては、Lugendreさんの
+[Advent記事][Arrow Lugendre]がわかりやす
 いです)
 
 状態機械DSLをYampaで定義する
@@ -98,34 +107,37 @@ etc.)は限定され、タイムリークをおこしにくいよう設計され
 
 Yampaでシステムの状態を操作するには、次の方法があります。
 
-1.  `loopPre :: c -> SF (a,c) (b,c) -> SF a b`
+1. `loopPre :: c -> SF (a,c) (b,c) -> SF a b`
 
-状態変数をフィードバックする
+  状態変数をフィードバックする
 
-2.  スイッチ[^2]
+2. スイッチ[^fn2]
 
-    イベントによってシグナル関数の変遷を定義する
+   イベントによってシグナル関数の変遷を定義する
 
-         -- *Switchとd*Switchの違いはスイッチが起きた瞬間、スイッチ前と後のどちらの出力を使うか
-         -- d(==delayed)はスイッチ後の出力を使う
+        -- *Switchとd*Switchの違いはスイッチが起きた瞬間、スイッチ前と後のどちらの出力を使うか
+        -- d(==delayed)はスイッチ後の出力を使う
 
-         -- Switch once and for all
-         switch   :: SF a (b, Event c) -> (c -> SF a b) -> SF a b
-         dSwitch  :: SF a (b, Event c) -> (c -> SF a b) -> SF a b
+        -- Switch once and for all
+        switch   :: SF a (b, Event c) -> (c -> SF a b) -> SF a b
+        dSwitch  :: SF a (b, Event c) -> (c -> SF a b) -> SF a b
 
-         -- Recurrent switches
-         rSwitch  :: SF a b -> SF (a, Event (SF a b)) b
-         drSwitch :: SF a b -> SF (a, Event (SF a b)) b
+        -- Recurrent switches
+        rSwitch  :: SF a b -> SF (a, Event (SF a b)) b
+        drSwitch :: SF a b -> SF (a, Event (SF a b)) b
 
-         -- Switch with continuation
-         kSwitch  :: SF a b -> SF (a, b) (Event c) -> (SF a b -> c -> SF a b) -> SF a b
-         dkSwitch :: SF a b -> SF (a, b) (Event c) -> (SF a b -> c -> SF a b) -> SF a b
+        -- Switch with continuation
+        kSwitch  :: SF a b -> SF (a, b) (Event c) -> (SF a b -> c -> SF a b) -> SF a b
+        dkSwitch :: SF a b -> SF (a, b) (Event c) -> (SF a b -> c -> SF a b) -> SF a b
+
+[^fn2]: スイッチの[ダイアグラム][Yampa switch diagram]がわかりやすいです。
 
 1.の状態変数を直接使った記述は、複雑な状
 態機械の記述にはあまり向きません。単純な
 正規表現や生成文法から、大量の状態変数が
 必要になることはよくありますし、少しの文
-法の変更が状態機械の大きな変更を強いることもあります。
+法の変更が状態機械の大きな変更を強いるこ
+ともあります。
 
 ここでは、スイッチを使いシグナル関数の正規
 表現コンビネータを定義してみましょう。
@@ -165,7 +177,8 @@ Yampaでシステムの状態を操作するには、次の方法があります
 
 (以下自問です。答をお持ちの方は教えてください)
 
-Ex.1 delayedでないバージョン `step`, `alt`, `plus` を定義してください。
+Ex.1
+delayedでないバージョン `step`, `alt`, `plus` を定義してください。
 どんな場合にビジーループが発生するでしょうか。
 
 Ex.2
@@ -176,87 +189,87 @@ Ex.2
 Ex.3
 型レベルプログラミングを用いて、`dAlt`を一般の直和型に拡張してください
 
-Ex.4 上の正規表現コンビネータを、LL(1)文法に拡張してください。
+Ex.4
+上の正規表現コンビネータを、LL(1)文法に拡張してください。
 
-Ex.5 非決定性オートマトンを表現するにはどうすればよいでしょうか。
+Ex.5
+非決定性オートマトンを表現するにはどうすればよいでしょうか。
 
 認知行動療法に基づく自己対話
 ----------------------------
 
 認知行動療法(CBT)は、鬱病患者が一定のテ
-キストを自習することでも効果があるとの報告(Jamison and Scogin
-[1995](#ref-JamisonScogin95))があります。投薬およ
-び専門家によるセラピーとの組み合わせで効果があがるとの結果(F. Scogin
-[1989](#ref-Scogin89))もあるので、
-主治医に相談されることをお勧めします。 CBTは無条件ではありませんが、
-[保険適用されます](https://clinicalsup.jp/contentlist/shinryo/ika_2_8_1/i003-2.html "CBT health insurance")。
+キストを自習することでも効果があるとの報
+告[@JamisonScogin95]があります。投薬およ
+び専門家によるセラピーとの組み合わせで効
+果があがるとの結果[@Scogin89]もあるので、
+主治医に相談されることをお勧めします。
+CBTは無条件ではありませんが、
+[保険適用されます][CBT insurance]。
 
-ここでは、スタンフォード大学名誉教授 David
-Burns医師によるCBT自助テキスト Feeling Good(Burns
-[1981](#ref-Burns81))にある、自己対話スキームの一つを紹介します。
+ここでは、スタンフォード大学名誉教授
+David Burns医師によるCBT自助テキスト
+Feeling Good[@Burns81]にある、自己対話ス
+キームの一つを紹介します。
 
 ### Triple-column technique
+1. 「自動思考」の記述
 
-1.  「自動思考」の記述
+   頭に自然に受かぶ、ネガティブな考えを書く
 
-    頭に自然に受かぶ、ネガティブな考えを書く
+   例: 自分はろくなコード書けない、だめなやつだ
 
-    例: 自分はろくなコード書けない、だめなやつだ
+2. 「認知の歪み」のチェック
 
-2.  「認知の歪み」のチェック
-
-  自動思考を10の主な認知の歪み(Cognitive
-  Distortion)のパターンと照らしあわせる
+ 自動思考を10の主な認知の歪み(Cognitive Distortion)のパターンと照らしあわせる
 
     例:
 
-    -   ALL-OR-Nothing(全か無か)
+   - ALL-OR-Nothing(全か無か)
 
-      完璧でないコードでも、実際使われているなら無意味とはいえない
+     完璧でないコードでも、実際使われているなら無意味とはいえない
 
-    -   Overgeneralization(過度の一般化)
+   - Overgeneralization(過度の一般化)
 
       今体調が悪いだけかもしれない。ずっといいコード書けないとは限らない
-    -   Mental Filter(ネガティブの取りだし)
+   - Mental Filter(ネガティブの取りだし)
 
-        今いいコードを書けないことを取り出して、ことさらに強調している。
+     今いいコードを書けないことを取り出して、ことさらに強調している。
 
-    -   Disqualifying the Positive(ポジティブの無視)
+   - Disqualifying the Positive(ポジティブの無視)
 
-       他にいいコードを書いてるかもしれないし、コーディング以外にうまくいってることもあるかもしれない
+     他にいいコードを書いてるかもしれないし、コーディング以外にうまくいってることもあるかもしれない
+   - Fortune Teller Error(占いミス)
 
-    -   Fortune Teller Error(占いミス)
+     根拠なく、この先もいいコード書けないと予想
 
-      根拠なく、この先もいいコード書けないと予想
+   - Maginification/Minimization
 
-    -   Maginification/Minimization
+     今の体調でいいコード書けなかったことを過大に考えている
 
-      今の体調でいいコード書けなかったことを過大に考えている
+   - Emotional Reasoning(感情思考)
 
-    -   Emotional Reasoning(感情思考)
+     気分が沈む、だからいいコード書けないだろう。論理でなく、感情的な推論
 
-       気分が沈む、だからいいコード書けないだろう。論理でなく、感情的な推論
+   - Labeling/Mislabeling(レッテル)
 
-    -   Labeling/Mislabeling(レッテル)
-
-       どんな点でもまったくだめな人間などいないから、だめなやつというレッテル貼りはほぼ常に誤り
+      どんな点でもまったくだめな人間などいないから、だめなやつというレッテル貼りはほぼ常に誤り
 
     その他のパターンと詳細な説明は"Feeling Good" pp.50 を参照してください。
 
-3.  理性的反応
+3. 理性的反応
 
-  認知の歪みのパターンをチェックしたら、それを基に自動思考に反応してみます。
+       認知の歪みのパターンをチェックしたら、それを基に自動思考に反応してみます。
 
-  例:
+       例:
 
-  自分は過去にはいいコード書いたこともあるし、評価もされた。
-  今調子が悪いからといってずっとそうとは限らない。
-  コーディング以外にも料理がおいしいと言われたし、話やすいとも言われた。
-  今書いたコードは確かに完璧でないしバグもあるけど、それだけで自分がだめなやつとは言えない。
-  自己管理を向上させて、体調を整えてもっと勉強して、もっといいプログラマになればいい。
+       自分は過去にはいいコード書いたこともあるし、評価もされた。
+       今調子が悪いからといってずっとそうとは限らない。
+       コーディング以外にも料理がおいしいと言われたし、話やすいとも言われた。
+       今書いたコードは確かに完璧でないしバグもあるけど、それだけで自分がだめなやつとは言えない。
+       自己管理を向上させて、体調を整えてもっと勉強して、もっといいプログラマになればいい。
 
-このスキームにどのような意味があるのか、効果が実証されているかについては、同書
-pp.28を参照してください。
+このスキームにどのような意味があるのか、効果が実証されているかについては、同書 pp.28を参照してください。
 同書には、10以上の自己対話スキームが紹介されています。抑鬱状態時のモチベーションの低下、
 予定の引き延ばし(procrastination)、人間関係の悪化など、状況ごとに方法論が整理されています。
 
@@ -297,7 +310,8 @@ YampaでTriple-column Techniqueを実装
 Haskellではユナリオペレータの定義に制限
 があるため、普通の正規表現と完全に一致す
 るような自然なDSLは作れませんが、かなり
-直感的な表現が可能であることがわかると思 います。
+直感的な表現が可能であることがわかると思
+います。
 
 Triple-column technique自体は、分岐のな
 い三つの対話モードの連結で表現できます。
@@ -331,7 +345,7 @@ Triple-column technique自体は、分岐のな
     ...
 
 シグナル関数の実行
-------------------
+-------------------
 
 Yampaでは、次の「メイン関数」が用意されています。
 
@@ -351,7 +365,8 @@ Yampaでは、次の「メイン関数」が用意されています。
 
 他のライブラリとの兼ね合いでエントリーが
 制限されている場合は、`IORef`を使いシグ
-ナル関数をステップごとに実行するAPIも用意されています。
+ナル関数をステップごとに実行するAPIも用
+意されています。
 
 結論
 ----
@@ -366,42 +381,28 @@ Functional Reactive Programmingは関数言
 タンスと別に、時間方向の状態変動をシンボ
 リックに表す正規表現DSLを定義しました。
 Slack、Line、Twitterなどのウェブサービス
-や、実際のロボットの制御などに活用できる かもしれません。
+や、実際のロボットの制御などに活用できる
+かもしれません。
 
-参考文献 {#参考文献 .unnumbered}
+参考文献
 --------
 
-::: {#refs .references}
-::: {#ref-Burns81}
-Burns, David D. 1981. *Feeling Good: The New Mood Therapy*. New York,
-N.Y.: Penguin Books.
-:::
+[FRAN paper]: http://conal.net/papers/icfp97/ "Functional Reactive Animation"
 
-::: {#ref-ElliottHudak97:Fran}
-Elliott, Conal, and Paul Hudak. 1997. "Functional Reactive Animation."
-In *International Conference on Functional Programming*.
-<http://conal.net/papers/icfp97/>.
-:::
+[Yampa hackage]: http://hackage.haskell.org/package/Yampa "Yampa hackage"
 
-::: {#ref-Scogin89}
-F. Scogin, K. Gochneaut, C. Jamison. 1989. "The Comparative Efficacy of
-Cognitive and Behavioral Bibliotherapy for Mildly and Moderately
-Depressed Older Adults." *Journal of Consulting and Clinical Psychology*
-57:403--7.
-:::
+[Yampa wiki]: https://wiki.haskell.org/Yampa#External_Links "Yampa wiki"
 
-::: {#ref-Hughes00}
-Hughes, John. 2000. "Generalising Monads to Arrows." *Science of
-Computer Programming* 37 (May):67--111.
-:::
+[Yampa Slide]: http://www.cs.yale.edu/homes/hudak/CS429F04/LectureSlides/YampaForCs429.ppt "Yampa Slide"
 
-::: {#ref-JamisonScogin95}
-Jamison, C., and F. Scogin. 1995. "Outcome of Cognitive Bibliotherapy
-with Depressed Adults." *Journal of Consulting and Clinical Psychology*
-63:644--50.
-:::
-:::
+[Yampa switch diagram]: http://lambdor.net/?p=209 "Yampa Switch Diagram"
 
-[^1]: Paul Hudakによる[Yampaスライド](http://www.cs.yale.edu/homes/hudak/CS429F04/LectureSlides/YampaForCs429.ppt "Yampa Slide")を参照。
+[Arrow wiki]: https://wiki.haskell.org/Arrow#External_links "Arrow wiki"
 
-[^2]: スイッチの[ダイアグラム](http://lambdor.net/?p=209 "Yampa Switch Diagram")がわかりやすいです。
+[Arrow Lugendre]: https://qiita.com/Lugendre/items/6b4a8c8a9c85fcdcb292 "Lugendre Arrow"
+
+[Advent3]: https://qiita.com/advent-calendar/2017/haskell3 "Haskell Advent Calendar 3"
+
+[Prev]: https://matsubara0507.github.io/posts/2017-12-12-backpack-memo.html "Previous article"
+
+[CBT insurance]: https://clinicalsup.jp/contentlist/shinryo/ika_2_8_1/i003-2.html "CBT health insurance"

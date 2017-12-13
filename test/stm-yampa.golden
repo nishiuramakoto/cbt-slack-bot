@@ -19,6 +19,7 @@ BotMessage "コマンド:"
 BotMessage "ヘルプ -- Enter help mode"
 BotMessage "3 -- Start Triple-column technique"
 BotMessage "自動思考 -- Start Triple-column technique"
+BotMessage "診断 -- Burns Depression Checklist"
 BotMethodStart CbtTripleColumnTechnique
 BotStackPush   CbtTripleColumnTechnique CbtStackAT "I'm a dumb"
 BotStackFreeze CbtTripleColumnTechnique CbtStackAT

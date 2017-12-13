@@ -16,6 +16,7 @@ import qualified Data.List as List
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Control.Monad.State as SM
 
+import Text.Read
 import Text.Show.Unicode
 import Control.Arrow
 import Control.Monad
@@ -45,6 +46,9 @@ data BotOutput
   | BotWarn    String
   | BotSessionHelpStart
   | BotSessionHelpFinish
+  | BotDiagnosisStart
+  | BotDiagnosisAbort
+  | BotDiagnosisFinish
   | BotStackPush    CbtMethod CbtStack String
   | BotStackFreeze  CbtMethod CbtStack
   | BotMethodStart  CbtMethod
@@ -100,6 +104,10 @@ data CbtCommand
   | CbtMethodColumnStart   CbtMethod CbtStack
   | CbtMethodColumnAbort   CbtMethod CbtStack
   | CbtMethodColumnFinish  CbtMethod CbtStack
+  | CbtDiagnosisStart
+  | CbtDiagnosisAbort
+  | CbtDiagnosisFinish
+  | CbtDiagnosis Int
   | CbtUnknownCommand String
                 deriving (Eq, Ord, Show)
 
@@ -141,8 +149,7 @@ echo = Yampa.arr f
 -- Event switching using Kleene's language
 -- (i.e. the regular expression)
 
-type ESF ei eo a b = ei
-                     -> Yampa.SF a (b, Yampa.Event eo)
+type ESF ei eo a b = ei -> Yampa.SF a (b, Yampa.Event eo)
 
 dEmpty :: ESF e e a a
 dEmpty e = Yampa.identity
@@ -227,10 +234,119 @@ cbtE e = (stm e &&& abort e) >>^ cat
     doMethod e = case e of
        CbtSessionHelpStart   ->
          cbtSessionHelpE e
+
        CbtMethodStart CbtTripleColumnTechnique ->
          cbtTripleColumnTechniqueE e
+
+       CbtDiagnosis n ->
+         cbtDiagnosisE e
+
        _  ->
          cbtUnimplementedE e
+
+
+burnsDepressionChecklist :: [String]
+burnsDepressionChecklist =
+  [ "Feeling sad or down in the dumps"
+  , "Feeling unhappy or blue"
+  , "Crying spells or tearfulness"
+  , "Feeling discouraged"
+  , "Feeling hopeless"
+  , "Low self-esteem"
+  , "Feeling worthless or inadequate"
+  , "Guilt or shame"
+  , "Criticizing yourself or blaming yourself"
+  , "Difficulty making decision"
+  ] ++
+  [ "Loss of interest in family, friends or colleagues"
+  , "Loneliness"
+  , "Spending less time with family or friends"
+  , "Loss of motivation"
+  , "Loss of interest in work or other activities"
+  , "Loss of pleasure or satisfaction in life"
+  ] ++
+  [ "Feeling tired"
+  , "Difficulty sleeping or sleeping too much"
+  , "Decreased or increased appetite"
+  , "Loss of interest in sex"
+  , "Worrying about your health"
+  ] ++
+  [ "Do you have any suicidal thoughts?"
+  , "Would you like to end your life?"
+  , "Do you have a plan for harming yourself?"
+  ]
+
+burnsDepressionChecklistJP :: [String]
+burnsDepressionChecklistJP =
+  [ "悲しい、鬱だ"
+  , "幸せでないと感じる、ブルーだ"
+  , "泣きじゃくる、涙が出る"
+  , "元気がでない"
+  , "希望がない"
+  , "自己評価が低い"
+  , "自分は無価値だ、未熟だ"
+  , "罪悪感、恥を感じる"
+  , "自分を責める"
+  , "決められない"
+  ] ++
+  [ "家族、友人、同僚に興味がなくなってきた"
+  , "孤独"
+  , "家族や友人と過ごす時間が少なくなってきた"
+  , "やる気をなくしてきた"
+  , "仕事や他の活動に興味がなくなってきた"
+  , "人生の楽しみや満足を感じなくなってきた"
+  ] ++
+  [ "疲れを感じる"
+  , "眠れない、眠りすぎる"
+  , "食欲がない、食欲が増した"
+  , "性交渉に興味がなくなってきた"
+  , "自分の健康が心配"
+  ] ++
+  [ "自殺願望はありますか？"
+  , "人生を終わらせたいとお考えになりますか？"
+  , "自分を傷つける計画はありますか？"
+  ]
+
+cbtDiagnosisE :: CbtBot
+cbtDiagnosisE =
+  dStepFold (map question burnsDepressionChecklistJP)
+  `dStep`
+  showScore
+
+  where
+    question :: String -> CbtBot
+    question q (CbtDiagnosis score) =
+      Yampa.constant [BotMessage q]
+      &&&
+      (Yampa.arr readIntA >>^ add score)
+
+    question q e =
+      Yampa.constant [BotMessage $ "unknown event:" ++ ushow e]
+      &&&
+      Yampa.never
+
+    add :: Int -> Maybe Int -> Yampa.Event CbtCommand
+    add score (Just n) = event $
+                         CbtDiagnosis (score + n)
+    add score Nothing  = noEvent
+
+    showScore (CbtDiagnosis score) =
+      let f x (Just input)
+            | isBlankLine input =
+                (scoreMsg, event CbtDiagnosisFinish)
+            | otherwise =
+                (errMsg, noEvent)
+          f x Nothing =
+            (errMsg, event CbtDiagnosisFinish)
+
+          scoreMsg = [BotMessage $ "score=" ++ show score]
+          errMsg = [BotMessage $ "error" ]
+      in   Yampa.arr (f score)
+
+readIntA :: BotInput -> Maybe Int
+readIntA (Just input) = readMaybe input
+readIntA  Nothing     = Nothing
+
 
 cbtUnimplementedE :: CbtBot
 cbtUnimplementedE e =
@@ -247,10 +363,16 @@ cbtSessionGuideE _ = Yampa.arr parse
     parse (Just input)
       | input == ":start" =
           ([BotStart], noEvent)
-      | input == "ヘルプ" =
+
+      | input `elem` [ "ヘルプ" ] =
           (helpMessage  , ev CbtSessionHelpStart )
+
       | input `elem` ["3", ":3", "自動思考"] =
           (tctMessage, event tctEvent)
+
+      | input `elem` ["診断"] =
+          (diagMessage, event diagEvent)
+
       | otherwise =
           ([BotWarn $ "unknown command:" ++ input],
            noEvent)
@@ -263,7 +385,14 @@ cbtSessionGuideE _ = Yampa.arr parse
       , BotMessage "ヘルプ -- Enter help mode"
       , BotMessage "3 -- Start Triple-column technique"
       , BotMessage "自動思考 -- Start Triple-column technique"
+      , BotMessage "診断 -- Burns Depression Checklist"
       ]
+
+    diagMessage =
+      [ BotDiagnosisStart
+      , BotMessage "Burns Depression Checklist"
+      ]
+    diagEvent = CbtDiagnosis 0
 
     tctMessage =
       [ BotMethodStart
