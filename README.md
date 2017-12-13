@@ -1,17 +1,19 @@
----
-bibliography: 'cbt-bot.bib'
-link-citations: True
-nocite: '@\*'
----
+What is this?
+=============
 
-Instructions
-------------
+This is a simple slack bot using Yampa, a Functional
+Reactive Programming library in Haskell. The idea is to
+define a regex-like DSL for switching signal functions.
+This allows short, readable definitions of complex
+finite state machines that changes their behaviors across time.
+
+Instructions for testing
+------------------------
 
 1. Create a Slack workspace and/or channel for testing.
-1. Get a [slack legacy api token][https://api.slack.com/custom-integrations/legacy-tokens] for that channel.
-2. Edit `apiKey` in `src/Main.hs`.
-3. `stack setup && stack build && stack exec`
-
+2. Get a [slack legacy api token](https://api.slack.com/custom-integrations/legacy-tokens) for that channel.
+3. Edit `apiKey` in `src/Main.hs`.
+4. `stack setup && stack build && stack exec`
 
 YampaでFunctional Reactiveな認知行動療法ボットを書く
 ====================================================
@@ -47,7 +49,15 @@ Specific Language) で表せると便利です。状態変数を直接扱うと�
 状態変数の意味や数に大きな変更を生じたりするからです。
 
 Yampaでそのような正規表現的状態機械DSLを
-書いて、CBTボットのコーディングに使って みましょう。
+書いて、CBTボットのコーディングに使ってみましょう。
+
+## このCBTボットで何ができるか
+
+ここで実装するCBTボットは人工知能ではなく、自己対話のための
+ガイダンスが目的です。ユーザーの指示にしたがって、必要な
+情報を表示し、記録し、後に分析を行う機能を持つことがゴー
+ルです。FRPで定義するボットの挙動は完全にピュアでIOと独立であるため、
+後の機能追加が用意であることが利点です。
 
 YampaとArrowised Functional Reactive Programming(AFRP)
 ------------------------------------------------------
@@ -105,11 +115,18 @@ etc.)は限定され、タイムリークをおこしにくいよう設計され
 状態機械DSLをYampaで定義する
 ----------------------------
 
+基本的なYampaの使い方については、こちらの
+[スライド](http://www.cs.yale.edu/homes/hudak/CS429F04/LectureSlides/YampaForCs429.ppt
+"Yampa Slide")がわかりやすいと思います。
+
+ここでは、時間そしてイベントごとに状態を変えるロボットを、簡
+単に記述するためのDSLを考えてみましょう。
+
 Yampaでシステムの状態を操作するには、次の方法があります。
 
 1.  `loopPre :: c -> SF (a,c) (b,c) -> SF a b`
 
-状態変数をフィードバックする
+  状態変数をフィードバックする
 
 2.  スイッチ[^2]
 
@@ -137,7 +154,7 @@ Yampaでシステムの状態を操作するには、次の方法があります
 法の変更が状態機械の大きな変更を強いることもあります。
 
 ここでは、スイッチを使いシグナル関数の正規
-表現コンビネータを定義してみましょう。
+表現コンビネータを定義してみます。
 
     type UnitEvent = Event ()
     type ESF i o a b = i -> SF a (b, Event o)
@@ -160,6 +177,8 @@ Yampaでシステムの状態を操作するには、次の方法があります
     dPlus x = x `dStep` dPlus x
 
 たったこれだけのことで、ロボットの動きを正規表現的に記述できるようになりました。
+("空"ロボットを許すと話は少し複雑になりますが、ここでは省き
+ます。)
 
 関数`Time -> a`のグラフをイメージしてみ
 ると、シグナル関数のArrowインスタンスは、
@@ -204,6 +223,10 @@ Ex.5 非決定性オートマトンを表現するにはどうすればよいで
 Burns医師によるCBT自助テキスト Feeling Good(Burns
 [1981](#ref-Burns81))にある、自己対話スキームの一つを紹介します。
 
+邦訳は
+[こちら](http://www.seiwa-pb.co.jp/search/bo05/bn798.html)
+です。
+
 ### Triple-column technique
 
 1.  「自動思考」の記述
@@ -219,7 +242,7 @@ Burns医師によるCBT自助テキスト Feeling Good(Burns
 
   例:
 
-  -   ALL-OR-Nothing(全か無か)
+  -   All-or-Nothing(全か無か)
 
     完璧でないコードでも、実際使われているなら無意味とはいえない
 
@@ -264,10 +287,10 @@ Burns医師によるCBT自助テキスト Feeling Good(Burns
   今書いたコードは確かに完璧でないしバグもあるけど、それだけで自分がだめなやつとは言えない。
   自己管理を向上させて、体調を整えてもっと勉強して、もっといいプログラマになればいい。
 
-このスキームにどのような意味があるのか、効果が実証されているかについては、同書
-pp.28を参照してください。
 同書には、10以上の自己対話スキームが紹介されています。抑鬱状態時のモチベーションの低下、
 予定の引き延ばし(procrastination)、人間関係の悪化など、状況ごとに方法論が整理されています。
+便利な自己診断チェックリストもあり、不調を抱える方は是非一読
+をお勧めします。
 
 YampaでTriple-column Techniqueを実装
 ------------------------------------
