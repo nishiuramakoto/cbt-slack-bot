@@ -406,30 +406,25 @@ Slack、Line、Twitterなどのウェブサービス
 * Burns, David D. 1981. *Feeling Good: The New Mood Therapy*. New York,
   N.Y.: Penguin Books.
 
-::: {#ref-ElliottHudak97:Fran}
-Elliott, Conal, and Paul Hudak. 1997. "Functional Reactive Animation."
-In *International Conference on Functional Programming*.
-<http://conal.net/papers/icfp97/>.
-:::
+<a name="ref-ElliottHudak97:Fran"></a>
+* Elliott, Conal, and Paul Hudak. 1997. "Functional Reactive Animation."
+  In *International Conference on Functional Programming*.
+  <http://conal.net/papers/icfp97/>.
 
-::: {#ref-Scogin89}
-F. Scogin, K. Gochneaut, C. Jamison. 1989. "The Comparative Efficacy of
-Cognitive and Behavioral Bibliotherapy for Mildly and Moderately
-Depressed Older Adults." *Journal of Consulting and Clinical Psychology*
-57:403--7.
-:::
+<a name="ref-Scogin89"></a>
+* F. Scogin, K. Gochneaut, C. Jamison. 1989. "The Comparative Efficacy of
+  Cognitive and Behavioral Bibliotherapy for Mildly and Moderately
+  Depressed Older Adults." *Journal of Consulting and Clinical Psychology*
+  57:403--7.
 
-::: {#ref-Hughes00}
-Hughes, John. 2000. "Generalising Monads to Arrows." *Science of
-Computer Programming* 37 (May):67--111.
-:::
+<a name="ref-Hughes00"></a>
+* Hughes, John. 2000. "Generalising Monads to Arrows." *Science of
+  Computer Programming* 37 (May):67--111.
 
-::: {#ref-JamisonScogin95}
-Jamison, C., and F. Scogin. 1995. "Outcome of Cognitive Bibliotherapy
-with Depressed Adults." *Journal of Consulting and Clinical Psychology*
-63:644--50.
-:::
-:::
+<a name="ref-JamisonScogin95">
+* Jamison, C., and F. Scogin. 1995. "Outcome of Cognitive Bibliotherapy
+  with Depressed Adults." *Journal of Consulting and Clinical Psychology*
+  63:644--50.
 
 [^1]: Paul Hudakによる[Yampaスライド](http://www.cs.yale.edu/homes/hudak/CS429F04/LectureSlides/YampaForCs429.ppt "Yampa Slide")を参照。
 
