@@ -208,40 +208,40 @@ Burns医師によるCBT自助テキスト Feeling Good(Burns
   自動思考を10の主な認知の歪み(Cognitive
   Distortion)のパターンと照らしあわせる
 
-    例:
+  例:
 
-    -   ALL-OR-Nothing(全か無か)
+  -   ALL-OR-Nothing(全か無か)
 
-      完璧でないコードでも、実際使われているなら無意味とはいえない
+    完璧でないコードでも、実際使われているなら無意味とはいえない
 
-    -   Overgeneralization(過度の一般化)
+  -   Overgeneralization(過度の一般化)
 
-      今体調が悪いだけかもしれない。ずっといいコード書けないとは限らない
-    -   Mental Filter(ネガティブの取りだし)
+    今体調が悪いだけかもしれない。ずっといいコード書けないとは限らない
+  -   Mental Filter(ネガティブの取りだし)
 
-        今いいコードを書けないことを取り出して、ことさらに強調している。
+    今いいコードを書けないことを取り出して、ことさらに強調している。
 
-    -   Disqualifying the Positive(ポジティブの無視)
+  -   Disqualifying the Positive(ポジティブの無視)
 
-       他にいいコードを書いてるかもしれないし、コーディング以外にうまくいってることもあるかもしれない
+    他にいいコードを書いてるかもしれないし、コーディング以外にうまくいってることもあるかもしれない
 
-    -   Fortune Teller Error(占いミス)
+  -   Fortune Teller Error(占いミス)
 
-      根拠なく、この先もいいコード書けないと予想
+    根拠なく、この先もいいコード書けないと予想
 
-    -   Maginification/Minimization
+  -   Maginification/Minimization
 
-      今の体調でいいコード書けなかったことを過大に考えている
+    今の体調でいいコード書けなかったことを過大に考えている
 
-    -   Emotional Reasoning(感情思考)
+  -   Emotional Reasoning(感情思考)
 
-       気分が沈む、だからいいコード書けないだろう。論理でなく、感情的な推論
+     気分が沈む、だからいいコード書けないだろう。論理でなく、感情的な推論
 
-    -   Labeling/Mislabeling(レッテル)
+  -   Labeling/Mislabeling(レッテル)
 
-       どんな点でもまったくだめな人間などいないから、だめなやつというレッテル貼りはほぼ常に誤り
+     どんな点でもまったくだめな人間などいないから、だめなやつというレッテル貼りはほぼ常に誤り
 
-    その他のパターンと詳細な説明は"Feeling Good" pp.50 を参照してください。
+   その他のパターンと詳細な説明は"Feeling Good" pp.50 を参照してください。
 
 3.  理性的反応
 
