@@ -5,7 +5,7 @@ This is a simple slack bot using Yampa, a Functional
 Reactive Programming library in Haskell. The idea is to
 define a regex-like DSL for switching signal functions.
 This allows short, readable definitions of complex
-finite state machines that changes their behaviors across time.
+finite state machines that change their behaviors across time.
 
 Instructions for testing
 ------------------------
@@ -31,13 +31,12 @@ Backpack覚え書き](https://matsubara0507.github.io/posts/2017-12-12-backpack-
 化するシステムの挙動を、シンボリックに記
 述し、組み合わせることができます。ロボッ
 ト、ゲーム、GUIなどのプロラミングに便利
-です。[Yampa](https://wiki.haskell.org/Yampa#External_Links "Yampa wiki")は、イエール大
-Haskellグループによって開発されたFRPのラ
-イブラリで、[Arrow](https://wiki.haskell.org/Arrow#External_links "Arrow wiki")の記法を
-フル活用します。
+です。[Yampa](https://wiki.haskell.org/Yampa#External_Links "Yampa wiki")は、
+[Arrow](https://wiki.haskell.org/Arrow#External_links "Arrow wiki")の記法を
+フル活用するFRPのライブラリです。
 
 認知行動療法(Cognitive Behaviour Therapy, CBT)は、医学的に確
-立された心理療法の一種です。本記事では、CBTの自己対話スキー
+立された心理療法の一種です。ここでは、CBTの自己対話スキー
 ムを提供するボットを、Yampaを使って書いてみます。
 
 目標
@@ -49,7 +48,7 @@ Specific Language) で表せると便利です。状態変数を直接扱うと�
 状態変数の意味や数に大きな変更を生じたりするからです。
 
 Yampaでそのような正規表現的状態機械DSLを
-書いて、CBTボットのコーディングに使ってみましょう。
+書いて、CBTボットのコーディングに使ってみます。
 
 ## このCBTボットで何ができるか
 
@@ -212,11 +211,11 @@ Ex.5 非決定性オートマトンを表現するにはどうすればよいで
 ----------------------------
 
 認知行動療法(CBT)は、鬱病患者が一定のテ
-キストを自習することでも効果があるとの報告(Jamison and Scogin
-[1995](#ref-JamisonScogin95))があります。投薬およ
+キストを自習することでも効果があるそうです(Jamison and Scogin
+[1995](#ref-JamisonScogin95))。投薬およ
 び専門家によるセラピーとの組み合わせで効果があがるとの結果(F. Scogin
-[1989](#ref-Scogin89))もあるので、
-主治医に相談されることをお勧めします。 CBTは無条件ではありませんが、
+[1989](#ref-Scogin89))もあるそうなので、
+主治医に相談されることをお勧めします。 CBTは
 [保険適用されます](https://clinicalsup.jp/contentlist/shinryo/ika_2_8_1/i003-2.html "CBT health insurance")。
 
 ここでは、スタンフォード大学名誉教授 David
@@ -289,8 +288,7 @@ Burns医師によるCBT自助テキスト Feeling Good(Burns
 
 同書には、10以上の自己対話スキームが紹介されています。抑鬱状態時のモチベーションの低下、
 予定の引き延ばし(procrastination)、人間関係の悪化など、状況ごとに方法論が整理されています。
-便利な自己診断チェックリストもあり、不調を抱える方は是非一読
-をお勧めします。
+便利な自己診断チェックリストもあり、不調を抱える方は是非一読をお勧めします。
 
 YampaでTriple-column Techniqueを実装
 ------------------------------------
